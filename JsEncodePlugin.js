@@ -4,6 +4,11 @@ const path = require('path'); //node提供的一些用于处理文件路径的�
 var chalk = require('chalk') //用于向控制台输出带颜色的问题提示
 // 引入cheerio模块
 const cheerio = require('cheerio')
+
+var Bagpipe = require('bagpipe');
+// 设定最大并发数为10
+
+var bagpipe = new Bagpipe(10);
 // 2、模块对外暴露的 js 函数
 function JsEncodePlugin(pluginOptions) {
   this.options = pluginOptions;
@@ -119,11 +124,16 @@ JsEncodePlugin.prototype.apply = function (compiler) {
           ))
           return;
         }
-        for (let a = 0, flen = files.length; a < flen; a++) {
-          // files.forEach((filename) => { //遍历该路径下所有文件
-          if (_this.options.jsReg.test(files[a])) { //利用正则匹配我们要加密的文件,_this.options.jsReg为插件中传过来的需要加密的js文件正则，用以筛选出我们需要加密的js文件。
-            var filedir = path.resolve(fp, files[a]);
-            fs.readFile(filedir, 'utf-8', (err, data) => { //读取文件源码
+        // console.log(files+"+++++++++++++++")
+        // for (let a = 0, flen = files.length; a < flen; a++) {
+        files.forEach((filename) => { //遍历该路径下所有文件
+          if (_this.options.jsReg.test(filename)) { //利用正则匹配我们要加密的文件,_this.options.jsReg为插件中传过来的需要加密的js文件正则，用以筛选出我们需要加密的js文件。
+            var filedir = path.resolve(fp, filename);
+            // for (vari = 0; i < files.length; i++) { }
+            // fs.readFile(files[i], 'utf-8', function (err, data) {
+            bagpipe.push(fs.readFile, filedir, 'utf-8', function (err, data) {
+              // 不会因为文件描述符过多出错
+              // 妥妥的
               if (err) {
                 console.log(chalk.yellow(
                   '读取js文件异常：\n' +
@@ -131,68 +141,97 @@ JsEncodePlugin.prototype.apply = function (compiler) {
                 ))
                 return;
               }
-              var $ = cheerio.load(data,{decodeEntities: false});
-              // 获取所有的script标签内容
-              console.log(chalk.cyan($('script')));
+              let result = jjencode(_this.options.global, data);
+              fs.writeFile(filedir, result, (err) => { //将加密后的代码写回文件中
+                if (err) {
+                  console.log(chalk.yellow(
+                    '写入加密后的js文件异常：\n' +
+                    err.message + '\n'
+                  ))
+                  return;
+                }
+                console.log(chalk.cyan('  jsencode complete.\n'));
+                // fs.close(fs, function () {});
+              })
 
-              // fs.writeFile('c:/ey.js',$('script'), (err) => {  
-              //     if (err) {
-              //       console.log(chalk.yellow(
-              //         '写入加密后的js文件异常：\n' +
-              //         err.message + '\n'
-              //       ))
-              //       return;
-              //     }
-              //     console.log(chalk.cyan('  jsencode complete.\n'));
-              //   })
-              // let jsdata = new Array();
-              // let notjsdata = new Array();
-              // array = getScriptMethod(data);
-              // console.log('所有数据array：' + array);
-              // jsdata = array[0];
-              // notjsdata = array[1];
-              // 存放解析之后的js数据
-              // let jsDataAfter = new Array();
-              // console.log(chalk.cyan('  jsencode parseing......\n'));
-              // console.log(chalk.red('jsdata:' + jsdata));
-              // console.log(chalk.yellow('notjsdata1 :' + notjsdata[0]));
-              // console.log(chalk.yellow('notjsdata2 :' + notjsdata[1]));
+            });
+            // fs.readFile(filedir, 'utf-8', (err, data) => { //读取文件源码
+            //   if (err) {
+            //     console.log(chalk.yellow(
+            //       '读取js文件异常：\n' +
+            //       err.message + '\n'
+            //     ))
+            //     return;
+            //   }
+            //   // console.log(filedir+"==================================")
+            //   // var $ = cheerio.load(data, { decodeEntities: false });
+            //   // // 获取所有的script标签内容
+            //   // // console.log(chalk.cyan($('script')));
+            //   // $('script').each(function (index, element) {
+            //   //   // console.log($(this).html.toString());
+            //   //   $(this).text('');
+            //   //   console.log(chalk.red( $(this).text.toString()+"======="+index));
+            //   // })
+            //   // console.log('hhhhhh')
 
-              // var finalData = '';
-              // if (jsdata == 'NAN') {
-              //   finalData = notjsdata[0].toString() + notjsdata[1].toString();
-              // } else {
-              //   // console.log('长度：' + jsdata.length)
-              //   for (let i = 0; i < jsdata.length; i++) {
-              //     // console.log('jsdata' + i + ': ' + jsdata[i]);
-              //     //调用jjencode函数对源码进行jjencode加密，_this.options.global为插件配置中传过来的加密使用的全局变量名，将在jjencode函数中作为第一个参数传入
-              //     let result = jjencode(_this.options.global, jsdata[i].replace(/\s*/g, ""));
-              //     jsDataAfter.push(result);
-              //   }
-              //   //   // console.log('jsDataAfter : *****************' + jsDataAfter.toString());
-              //   finalData = notjsdata[0] + jsDataAfter.toString() + notjsdata[1];
-              // }
-              // console.log('finalData :&&&&&&&&&&' + finalData);
-              // let result = jjencode(_this.options.global, finalData);
-              // fs.writeFile(filedir, finalData, (err) => { //将加密后的代码写回文件中
-              //   if (err) {
-              //     console.log(chalk.yellow(
-              //       '写入加密后的js文件异常：\n' +
-              //       err.message + '\n'
-              //     ))
-              //     return;
-              //   }
-              //   console.log(chalk.cyan('  jsencode complete.\n'));
-              //   // fs.close(fs, function () {});
-              // })
-            })
+            //   // fs.writeFile(filedir,$('script'), (err) => {  
+            //   //     if (err) {
+            //   //       console.log(chalk.yellow(
+            //   //         '写入加密后的js文件异常：\n' +
+            //   //         err.message + '\n'
+            //   //       ))
+            //   //       return;
+            //   //     }
+            //   //     console.log(chalk.cyan('  jsencode complete.\n'));
+            //   //   })
+            //   // let jsdata = new Array();
+            //   // let notjsdata = new Array();
+            //   // array = getScriptMethod(data);
+            //   // console.log('所有数据array：' + array);
+            //   // jsdata = array[0];
+            //   // notjsdata = array[1];
+            //   // 存放解析之后的js数据
+            //   // let jsDataAfter = new Array();
+            //   // console.log(chalk.cyan('  jsencode parseing......\n'));
+            //   // console.log(chalk.red('jsdata:' + jsdata));
+            //   // console.log(chalk.yellow('notjsdata1 :' + notjsdata[0]));
+            //   // console.log(chalk.yellow('notjsdata2 :' + notjsdata[1]));
+
+            //   // var finalData = '';
+            //   // if (jsdata == 'NAN') {
+            //   //   finalData = notjsdata[0].toString() + notjsdata[1].toString();
+            //   // } else {
+            //   //   // console.log('长度：' + jsdata.length)
+            //   //   for (let i = 0; i < jsdata.length; i++) {
+            //   //     // console.log('jsdata' + i + ': ' + jsdata[i]);
+            //   //     //调用jjencode函数对源码进行jjencode加密，_this.options.global为插件配置中传过来的加密使用的全局变量名，将在jjencode函数中作为第一个参数传入
+            //   //     let result = jjencode(_this.options.global, jsdata[i].replace(/\s*/g, ""));
+            //   //     jsDataAfter.push(result);
+            //   //   }
+            //   //   //   // console.log('jsDataAfter : *****************' + jsDataAfter.toString());
+            //   //   finalData = notjsdata[0] + jsDataAfter.toString() + notjsdata[1];
+            //   // }
+            //   // console.log('finalData :&&&&&&&&&&' + finalData);
+            //   let result = jjencode(_this.options.global, data);
+            //   fs.writeFile(filedir, result, (err) => { //将加密后的代码写回文件中
+            //     if (err) {
+            //       console.log(chalk.yellow(
+            //         '写入加密后的js文件异常：\n' +
+            //         err.message + '\n'
+            //       ))
+            //       return;
+            //     }
+            //     console.log(chalk.cyan('  jsencode complete.\n'));
+            //     // fs.close(fs, function () {});
+            //   })
+            // })
           }
-        }
-    })
-}
+        })
+      })
+    }
 
-// 6、执行 callback 回调
-callback();
+    // 6、执行 callback 回调
+    callback();
   });
 };
 
