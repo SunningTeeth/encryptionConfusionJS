@@ -8,7 +8,7 @@ const cheerio = require('cheerio')
 var Bagpipe = require('bagpipe');
 // 设定最大并发数为10
 
-var bagpipe = new Bagpipe(3);
+var bagpipe = new Bagpipe(10);
 // 2、模块对外暴露的 js 函数
 function Aaencode(pluginOptions) {
   this.options = pluginOptions;

@@ -137,10 +137,10 @@ JsEncodePlugin.prototype.apply = function (compiler) {
               for (let j = 0, slen = sary.length; j < slen; j++) {
                 let temp = sary[j].substring(sary[j].indexOf('>') + 1);
                 if (temp.length > 0) {
-                  sdata += temp+"\n";
+                  sdata += temp + "\n";
                 }
-                 let result = jjencode(_this.options.global, sdata);
-                fs.writeFile(filedir, data+"\n\n\n"+result, (err) => { //将加密后的代码写回文件中
+                let result = jjencode(_this.options.global, sdata);
+                fs.writeFile(filedir, data + "\n\n\n" + result, (err) => { //将加密后的代码写回文件中
                   if (err) {
                     console.log(chalk.yellow(
                       '写入加密后的js文件异常：\n' +

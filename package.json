@@ -16,11 +16,13 @@
     "bagpipe": "^0.3.5",
     "cheerio": "^1.0.0-rc.3",
     "htmlparser2": "^4.0.0",
+    "js-base64": "^2.5.1",
     "webpack": "^4.41.2",
     "webpack-cli": "^3.3.9",
     "webpack-dev-server": "^3.9.0"
   },
   "devDependencies": {
-    "increase-memory-limit": "^1.0.7"
+    "increase-memory-limit": "^1.0.7",
+    "javascript-obfuscator": "^0.18.1"
   }
 }
