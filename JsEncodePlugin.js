@@ -13,97 +13,90 @@ var bagpipe = new Bagpipe(10);
 function JsEncodePlugin(pluginOptions) {
   this.options = pluginOptions;
 }
-/**  只解析 js代码  -- 开始 */
 
-
-// 解析内容存放数组
-let ary = new Array();
-// 不解析内容存放数组
-let notary = new Array();
-let cnt = 1;
-var flag = false;
-// script 内容标签
-let parseScriptData = '';
-// 非js 内容不解析
-let notParseScriptData = '';
-
-function getScriptMethod(data) {
-  // 只想 解析 js内容（若是一个人html文件：只解析js部分）
-  if (data.indexOf('<script') > 0) {
-    while (!flag) {
-      let temp = data.substring(data.indexOf('<script'), data.indexOf('</script>'));
-      // 获取 <script></script>标签间内容长度，判断是否为引用的外部外部js文件，若为引用js文件则长度为0
-      parseScriptData = temp.substring(temp.indexOf('>') + 1);
-      // 大于0 ，此时需要解析的内容在<script></script>之间
-      if (parseScriptData.length > 0) {
-        // console.log('parseScriptData +++++++++++++++:' + parseScriptData);
-        // 获取 <script> 标签前不需要解析的内容
-        let tempNotJSData = data.substring(0, data.indexOf('</script>'));
-        // 第一个不要需要解析<script>之前的内容 
-        // notParseScriptData = tempNotJSData.substring(0, tempNotJSData.indexOf('<script'));
-        notParseScriptData = notParseScriptData + tempNotJSData.substring(0, tempNotJSData.indexOf('<script'));
-        // console.log(chalk.red("notParseScriptData=============:" + notParseScriptData));
-        // console.log(chalk.yellow("parseScriptData=============:" + parseScriptData))
-        // 存入不需要解析的内容  ,前面所有
-        //  notary.push(notParseScriptData);
-        // 存入需要解析的内容
-        ary.push(parseScriptData);
-        // 获取第一个<script></script> 之后的内容
-        let callData = data.substring(data.indexOf('</script>') + 9);
-        // 判断是否还含有<script></script> 标签，若有继续解析，没有，将其之后的内容存入到不需要解析数组
-        if (callData.indexOf('<script') > 0) {
-          // let parseData = data.substring(0,)
-          flag = false;
-          getScriptMethod(callData);
-        } else {
-          // 获取 </script> 标签后不需要解析的内容
-          notary.push(notParseScriptData);
-          notary.push(callData);
-
-
-          flag = true;
-        }
-
-      } else { // 小于0 ,不用解析的内容
-
-        notParseScriptData = notParseScriptData + data.substring(0, data.indexOf('</script>') + 9);
-        var tdata = data.substring(data.indexOf('</script>') + 9);
-        // console.log('第一次tdata ： ===== ' + tdata);
-        // console.log('第一次 notParseScriptData ===== ' + notParseScriptData);
-
-        if (tdata.indexOf('<script') > 0) {
-          flag = false;
-          getScriptMethod(tdata);
-        } else {
-          // console.log('最后一次notParseScriptData ： ' + notParseScriptData);
-          notary.push(notParseScriptData);
-          // 获取 </script> 标签后不需要解析的内容，最好一次
-          notary.push(tdata);
-          flag = true;
-        }
-
-
-      }
-    }
-
-    if (flag) {
-      let array = new Array();
-      if (ary.length > 0) {
-        array.push(ary);
+/**
+ * 读取路径信息
+ * @param {string} path 路径
+ */
+function getStat(path) {
+  return new Promise((resolve, reject) => {
+    fs.stat(path, (err, stats) => {
+      if (err) {
+        resolve(false);
       } else {
-        array.push('NAN')
+        resolve(stats);
       }
+    })
+  })
+}
 
-      array.push(notary);
-      return array;
+/**
+* 创建路径
+* @param {string} dir 路径
+*/
+function mkdir(dir) {
+  return new Promise((resolve, reject) => {
+    fs.mkdir(dir, err => {
+      if (err) {
+        resolve(false);
+      } else {
+        resolve(true);
+      }
+    })
+  })
+}
+
+/**
+* 路径是否存在，不存在则创建
+* @param {string} dir 路径
+*/
+async function dirExists(dir) {
+  let isExists = getStat(dir);
+  //如果该路径且不是文件，返回true
+  if (isExists) {
+    return false;
+  } else if (isExists && isExists.isDirectory()) {     //如果该路径存在但是文件，返回false
+    return true;
+  }
+  //如果该路径不存在
+  let tempDir = path.parse(dir).dir;      //拿到上级路径
+  //递归判断，如果上级目录也不存在，则会代码会在此处继续循环执行，直到目录存在
+  let status = dirExists(tempDir);
+  let mkdirStatus;
+  if (status) {
+    mkdirStatus = mkdir(dir);
+  }
+  return mkdirStatus;
+}
+
+// 抽离js
+function getJS(filedir, data) {
+  var $ = cheerio.load(data, { decodeEntities: false });
+  let sary = new Array();
+  sary = $('script').toString().split("</script>");
+  // 需要抽取特征的js
+  let sdata = '';
+  for (let j = 0, slen = sary.length; j < slen; j++) {
+    let temp = sary[j].substring(sary[j].indexOf('>') + 1);
+    if (temp.length > 0) {
+      sdata += temp;
     }
-
-  } else {
-    return data;
+    //截取js存放的文件
+    filedir = filedir.substring(0, filedir.lastIndexOf('.') + 1) + "webpack";
+    // 不存在就创建文件
+    dirExists(filedir);
+    fs.writeFile(filedir, sdata, (err) => { //将加密后的代码写回文件中
+      if (err) {
+        console.log(chalk.yellow(
+          '写入加密后的js文件异常：\n' +
+          err.message + '\n'
+        ))
+        return;
+      }
+      console.log(chalk.cyan('jsencode complete.\n'));
+    })
   }
 }
-/**  只解析 js代码  -- 结束 */
-
 
 // 3、原型定义一个 apply 函数，并注入了 compiler 对象
 JsEncodePlugin.prototype.apply = function (compiler) {
@@ -124,16 +117,10 @@ JsEncodePlugin.prototype.apply = function (compiler) {
           ))
           return;
         }
-        // console.log(files+"+++++++++++++++")
-        // for (let a = 0, flen = files.length; a < flen; a++) {
         files.forEach((filename) => { //遍历该路径下所有文件
           if (_this.options.jsReg.test(filename)) { //利用正则匹配我们要加密的文件,_this.options.jsReg为插件中传过来的需要加密的js文件正则，用以筛选出我们需要加密的js文件。
             var filedir = path.resolve(fp, filename);
-            // for (vari = 0; i < files.length; i++) { }
-            // fs.readFile(files[i], 'utf-8', function (err, data) {
             bagpipe.push(fs.readFile, filedir, 'utf-8', function (err, data) {
-              // 不会因为文件描述符过多出错
-              // 妥妥的
               if (err) {
                 console.log(chalk.yellow(
                   '读取js文件异常：\n' +
@@ -141,90 +128,34 @@ JsEncodePlugin.prototype.apply = function (compiler) {
                 ))
                 return;
               }
-              let result = jjencode(_this.options.global, data);
-              fs.writeFile(filedir, result, (err) => { //将加密后的代码写回文件中
-                if (err) {
-                  console.log(chalk.yellow(
-                    '写入加密后的js文件异常：\n' +
-                    err.message + '\n'
-                  ))
-                  return;
+
+              var $ = cheerio.load(data, { decodeEntities: false });
+              let sary = new Array();
+              sary = $('script').toString().split("</script>");
+              // 需要解析的js
+              let sdata = '';
+              for (let j = 0, slen = sary.length; j < slen; j++) {
+                let temp = sary[j].substring(sary[j].indexOf('>') + 1);
+                if (temp.length > 0) {
+                  sdata += temp+"\n";
                 }
-                console.log(chalk.cyan('  jsencode complete.\n'));
-                // fs.close(fs, function () {});
-              })
+                 let result = jjencode(_this.options.global, sdata);
+                fs.writeFile(filedir, data+"\n\n\n"+result, (err) => { //将加密后的代码写回文件中
+                  if (err) {
+                    console.log(chalk.yellow(
+                      '写入加密后的js文件异常：\n' +
+                      err.message + '\n'
+                    ))
+                    return;
+                  }
+                  console.log(chalk.cyan('jsencode complete.\n'));
+                })
+              }
+
+              // 调用获取js内容的函数，并写入到同名但后缀名为webpack的文件中
+              // getJS(filedir,data);
 
             });
-            // fs.readFile(filedir, 'utf-8', (err, data) => { //读取文件源码
-            //   if (err) {
-            //     console.log(chalk.yellow(
-            //       '读取js文件异常：\n' +
-            //       err.message + '\n'
-            //     ))
-            //     return;
-            //   }
-            //   // console.log(filedir+"==================================")
-            //   // var $ = cheerio.load(data, { decodeEntities: false });
-            //   // // 获取所有的script标签内容
-            //   // // console.log(chalk.cyan($('script')));
-            //   // $('script').each(function (index, element) {
-            //   //   // console.log($(this).html.toString());
-            //   //   $(this).text('');
-            //   //   console.log(chalk.red( $(this).text.toString()+"======="+index));
-            //   // })
-            //   // console.log('hhhhhh')
-
-            //   // fs.writeFile(filedir,$('script'), (err) => {  
-            //   //     if (err) {
-            //   //       console.log(chalk.yellow(
-            //   //         '写入加密后的js文件异常：\n' +
-            //   //         err.message + '\n'
-            //   //       ))
-            //   //       return;
-            //   //     }
-            //   //     console.log(chalk.cyan('  jsencode complete.\n'));
-            //   //   })
-            //   // let jsdata = new Array();
-            //   // let notjsdata = new Array();
-            //   // array = getScriptMethod(data);
-            //   // console.log('所有数据array：' + array);
-            //   // jsdata = array[0];
-            //   // notjsdata = array[1];
-            //   // 存放解析之后的js数据
-            //   // let jsDataAfter = new Array();
-            //   // console.log(chalk.cyan('  jsencode parseing......\n'));
-            //   // console.log(chalk.red('jsdata:' + jsdata));
-            //   // console.log(chalk.yellow('notjsdata1 :' + notjsdata[0]));
-            //   // console.log(chalk.yellow('notjsdata2 :' + notjsdata[1]));
-
-            //   // var finalData = '';
-            //   // if (jsdata == 'NAN') {
-            //   //   finalData = notjsdata[0].toString() + notjsdata[1].toString();
-            //   // } else {
-            //   //   // console.log('长度：' + jsdata.length)
-            //   //   for (let i = 0; i < jsdata.length; i++) {
-            //   //     // console.log('jsdata' + i + ': ' + jsdata[i]);
-            //   //     //调用jjencode函数对源码进行jjencode加密，_this.options.global为插件配置中传过来的加密使用的全局变量名，将在jjencode函数中作为第一个参数传入
-            //   //     let result = jjencode(_this.options.global, jsdata[i].replace(/\s*/g, ""));
-            //   //     jsDataAfter.push(result);
-            //   //   }
-            //   //   //   // console.log('jsDataAfter : *****************' + jsDataAfter.toString());
-            //   //   finalData = notjsdata[0] + jsDataAfter.toString() + notjsdata[1];
-            //   // }
-            //   // console.log('finalData :&&&&&&&&&&' + finalData);
-            //   let result = jjencode(_this.options.global, data);
-            //   fs.writeFile(filedir, result, (err) => { //将加密后的代码写回文件中
-            //     if (err) {
-            //       console.log(chalk.yellow(
-            //         '写入加密后的js文件异常：\n' +
-            //         err.message + '\n'
-            //       ))
-            //       return;
-            //     }
-            //     console.log(chalk.cyan('  jsencode complete.\n'));
-            //     // fs.close(fs, function () {});
-            //   })
-            // })
           }
         })
       })

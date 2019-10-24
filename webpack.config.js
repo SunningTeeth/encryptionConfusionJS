@@ -15,19 +15,19 @@ module.exports = {
     plugins: [
         // new Aaencode({
         //     global: '$',
-        //     jsReg: /.*\.(?:vue|js)/,
-        //     assetsPath: './aaencode/js'
+        //     jsReg: /.*\.(?:html|js)/,
+        //     assetsPath: './aaencode/html'
         // }),
-        new JsEncodePlugin({
+        // new JsEncodePlugin({
+        //     global: '$',
+        //     jsReg: /.*\.(?:html|js)/,
+        //     assetsPath: './jjencodeSrc/1'
+        // }),
+        new Base64({
             global: '$',
             jsReg: /.*\.(?:html|js)/,
-            assetsPath: './jjencode/html'
-        }),
-        // new Base64({
-        //     global: '$',
-        //     jsReg: /.*\.(?:vue|js)/,
-        //     assetsPath: './aaencode/js'
-        // })
+            assetsPath: './base64/js'
+        })
         
 
     ]
