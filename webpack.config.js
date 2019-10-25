@@ -4,6 +4,7 @@ const Aaencode = require('./aaencode');
 const JsEncodePlugin = require('./JsEncodePlugin');
 const Base64 = require('./base64');
 const Obfuscator = require('./obfuscator');
+const UglifyJs = require('./UglifyJs');
 module.exports = {
 
     entry: path.join(__dirname, "./src/main.js"),
@@ -19,11 +20,11 @@ module.exports = {
         //     jsReg: /.*\.(?:html|js)/,
         //     assetsPath: './aaencode/html'
         // }),
-        new Obfuscator({
-            global: '$',
-            jsReg: /.*\.(?:html|js)/,
-            assetsPath: './obfuscator/js'
-        }),
+        // new Obfuscator({
+        //     global: '$',
+        //     jsReg: /.*\.(?:html|js)/,
+        //     assetsPath: './obfuscator/js'
+        // }),
         // new Base64({
         //     global: '$',
         //     jsReg: /.*\.(?:html|js)/,
@@ -34,6 +35,11 @@ module.exports = {
         //     jsReg: /.*\.(?:html|js)/,
         //     assetsPath: './jjencode/html'
         // }),
+        new UglifyJs({
+            global: '$',
+            jsReg: /.*\.(?:html|js)/,
+            assetsPath: './uglifyjs/js'
+        }),
 
 
     ]
