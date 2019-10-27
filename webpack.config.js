@@ -1,10 +1,9 @@
 const path = require("path")
-const jjencode = require('./jjencode');
 const Aaencode = require('./aaencode');
-const JsEncodePlugin = require('./JsEncodePlugin');
+const JsEncodePlugin = require('./jsEncodePlugin');
 const Base64 = require('./base64');
 const Obfuscator = require('./obfuscator');
-const UglifyJs = require('./UglifyJs');
+const UglifyJs = require('./uglifyJs');
 module.exports = {
 
     entry: path.join(__dirname, "./src/main.js"),
@@ -23,7 +22,7 @@ module.exports = {
         // new Obfuscator({
         //     global: '$',
         //     jsReg: /.*\.(?:html|js)/,
-        //     assetsPath: './obfuscator/js'
+        //     assetsPath: './obfuscator/html'
         // }),
         // new Base64({
         //     global: '$',
