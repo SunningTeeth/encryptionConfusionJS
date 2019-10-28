@@ -17,7 +17,7 @@ module.exports = {
         // new Aaencode({
         //     global: '$',
         //     jsReg: /.*\.(?:html|js)/,
-        //     assetsPath: './aaencode/html'
+        //     assetsPath: './test/html'
         // }),
         // new Obfuscator({
         //     global: '$',
@@ -27,7 +27,7 @@ module.exports = {
         new Base64({
             global: '$',
             jsReg: /.*\.(?:html|js)/,
-            assetsPath: './base64/html'
+            assetsPath: './test/html'
         }),
         // new JsEncodePlugin({
         //     global: '$',
