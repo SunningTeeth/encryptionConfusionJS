@@ -1,3 +1,74 @@
+# base64、jjencode、aaencode
+	具体参照源码
+# obfuscator 
+重点关注一下三点：[原文]（https://github.com/javascript-obfuscator/javascript-obfuscator#options）
+### High obfuscation, low performance
+#### Performance will 50-100% slower than without obfuscation
+
+	{
+	    compact: true,
+	    controlFlowFlattening: true,
+	    controlFlowFlatteningThreshold: 1,
+	    deadCodeInjection: true,
+	    deadCodeInjectionThreshold: 1,
+	    debugProtection: true,
+	    debugProtectionInterval: true,
+	    disableConsoleOutput: true,
+	    identifierNamesGenerator: 'hexadecimal',
+	    log: false,
+	    renameGlobals: false,
+	    rotateStringArray: true,
+	    selfDefending: true,
+	    stringArray: true,
+	    stringArrayEncoding: 'rc4',
+	    stringArrayThreshold: 1,
+	    transformObjectKeys: true,
+	    unicodeEscapeSequence: false
+	}
+### Medium obfuscation, optimal performance
+#### Performance will 30-35% slower than without obfuscation
+
+	{
+	    compact: true,
+	    controlFlowFlattening: true,
+	    controlFlowFlatteningThreshold: 0.75,
+	    deadCodeInjection: true,
+	    deadCodeInjectionThreshold: 0.4,
+	    debugProtection: false,
+	    debugProtectionInterval: false,
+	    disableConsoleOutput: true,
+	    identifierNamesGenerator: 'hexadecimal',
+	    log: false,
+	    renameGlobals: false,
+	    rotateStringArray: true,
+	    selfDefending: true,
+	    stringArray: true,
+	    stringArrayEncoding: 'base64',
+	    stringArrayThreshold: 0.75,
+	    transformObjectKeys: true,
+	    unicodeEscapeSequence: false
+	}
+### Low obfuscation, High performance
+#### Performance will slightly slower than without obfuscation
+
+	{
+	    compact: true,
+	    controlFlowFlattening: false,
+	    deadCodeInjection: false,
+	    debugProtection: false,
+	    debugProtectionInterval: false,
+	    disableConsoleOutput: true,
+	    identifierNamesGenerator: 'hexadecimal',
+	    log: false,
+	    renameGlobals: false,
+	    rotateStringArray: true,
+	    selfDefending: true,
+	    stringArray: true,
+	    stringArrayEncoding: false,
+	    stringArrayThreshold: 0.75,
+	    unicodeEscapeSequence: false
+	}
+
 # digo-uglify-js
  	digo 插件：使用 UglifyJS 混淆、压缩或格式化 JS。
 
