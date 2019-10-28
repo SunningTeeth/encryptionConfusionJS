@@ -24,21 +24,21 @@ module.exports = {
         //     jsReg: /.*\.(?:html|js)/,
         //     assetsPath: './obfuscator/html'
         // }),
-        // new Base64({
-        //     global: '$',
-        //     jsReg: /.*\.(?:html|js)/,
-        //     assetsPath: './base64/html'
-        // }),
+        new Base64({
+            global: '$',
+            jsReg: /.*\.(?:html|js)/,
+            assetsPath: './base64/html'
+        }),
         // new JsEncodePlugin({
         //     global: '$',
         //     jsReg: /.*\.(?:html|js)/,
         //     assetsPath: './jjencode/html'
         // }),
-        new UglifyJs({
-            global: '$',
-            jsReg: /.*\.(?:html|js)/,
-            assetsPath: './uglifyjs/js'
-        }),
+        // new UglifyJs({
+        //     global: '$',
+        //     jsReg: /.*\.(?:html|js)/,
+        //     assetsPath: './uglifyjs/js'
+        // }),
 
 
     ]

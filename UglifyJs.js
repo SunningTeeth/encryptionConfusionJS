@@ -8,6 +8,13 @@ const bagpipe = new Bagpipe(10);// 设定最大并发数为10
 // 1、js-encode-plugin.js 文件（webpack的js加密插件）
 var UglifyJS = require("uglify-js");
 
+//定义全局变量
+const PHP_ERROR = '\nuglifyjs--php语法格式有误!\n';
+const JS_ERROR = '\nuglifyjs--js语法格式有误!\n';
+
+const window_separator='\\';
+const linux_separator='/';
+
 // 2、模块对外暴露的 js 函数
 function UglifyJs(pluginOptions) {
   this.options = pluginOptions;
@@ -87,7 +94,8 @@ UglifyJs.prototype.apply = function (compiler) {
               //         console.log(chalk.cyan('jsencode complete.\n'));
               //     })
               // }
-              // 调用获取js内容的函数，并写入到同名但后缀名为webpack的文件中
+              
+              // 调用获取js内容的函数，并写入到同名但后缀名为webpack的文件中,朱window和Linux分隔符的区别
               // getJS(filedir,data);
             });
           }
@@ -106,7 +114,7 @@ function getJS(filedir, data) {
 
   //截取js存放的文件
   let filename = filedir.substring(0, filedir.lastIndexOf('.') + 1) + 'txt';
-  const fpath = filename.substring(0, filename.lastIndexOf('\\') + 1) + "parse";
+  const fpath = filename.substring(0, filename.lastIndexOf(linux_separator) + 1) + "parse";
   // 不存在就创建文件夹
   mkdir(fpath);
   var $ = cheerio.load(data, { decodeEntities: false });
@@ -121,7 +129,7 @@ function getJS(filedir, data) {
     }
   }
   if (sdata.replace(/\s*/g, "") != '' && sdata.replace(/\s*/g, "").length > 0) {
-    let p = fpath + filename.substring(filename.lastIndexOf("\\"));
+    let p = fpath + filename.substring(filename.lastIndexOf(linux_separator));
     fs.writeFile(p, sdata, (err) => { //将加密后的代码写回文件中
       if (err) {
         console.log(chalk.yellow(
