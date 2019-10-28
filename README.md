@@ -1,12 +1,12 @@
-++digo-uglify-js
-digo 插件：使用 UglifyJS 混淆、压缩或格式化 JS。
+# digo-uglify-js
+ 	digo 插件：使用 UglifyJS 混淆、压缩或格式化 JS。
 
-安装
-npm install digo-uglify-js -g
-使用
-压缩 JS
-digo.src("*.js", "!*.min.js").pipe("digo-uglify-js");
-JS 语法检查
+#### 安装
+	npm install digo-uglify-js -g
+#### 使用
+	压缩 JS
+	digo.src("*.js", "!*.min.js").pipe("digo-uglify-js");
+#### JS 语法检查
 digo.src("*.js").pipe("digo-uglify-js", {
 	compress: false
 });
