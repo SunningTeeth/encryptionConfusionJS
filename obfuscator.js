@@ -1,8 +1,6 @@
 const fs = require('fs'); //node的文件系统模块，用于读写及操作文件
 const path = require('path'); //node提供的一些用于处理文件路径的小工具
 const chalk = require('chalk'); //用于向控制台输出带颜色的问题提示
-const Bagpipe = require('bagpipe');// 防止文件too many open files
-const bagpipe = new Bagpipe(10);// 设定最大并发数为10
 const common = require('./common');
 
 // 1、js-encode-plugin.js 文件（webpack的js加密插件）
@@ -22,66 +20,26 @@ Obfuscator.prototype.apply = function (compiler) {
     // 5、操作 compilation 对象的内部数据
     console.log(chalk.cyan('\n jsencode start.\n'))
     var filePath = path.resolve(__dirname, _this.options.assetsPath); //设置需要加密的js文件路径，_this.options.assetsPath为插件配置中传过来的需要加密的js文件路径
-    filterFile(filePath);
-    function filterFile(fp) {
-      fs.readdir(fp, (err, files) => { //读取该文件路径
-        if (err) {
-          console.log(chalk.yellow(
-            '读取js文件夹异常魔鬼：\n' +
-            err.message + '\n'
-          ))
-          return;
-        }
-        files.forEach((filename) => { //遍历该路径下所有文件
-          if (_this.options.jsReg.test(filename)) { //利用正则匹配我们要加密的文件,_this.options.jsReg为插件中传过来的需要加密的js文件正则，用以筛选出我们需要加密的js文件。
-            var filedir = path.resolve(fp, filename);
-            bagpipe.push(fs.readFile, filedir, 'utf-8', function (err, data) {
-              if (err) {
-                console.log(chalk.yellow(
-                  '读取js文件异常：\n' +
-                  err.message + '\n'
-                ))
-                return;
-              }
-
-              const options = {
-                compact: true,
-                controlFlowFlattening: true,
-                controlFlowFlatteningThreshold: 1,
-                deadCodeInjection: true,
-                deadCodeInjectionThreshold: 1,
-                debugProtection: true,
-                debugProtectionInterval: true,
-                disableConsoleOutput: true,
-                identifierNamesGenerator: 'hexadecimal',
-                log: false,
-                renameGlobals: false,
-                rotateStringArray: true,
-                selfDefending: true,
-                stringArray: true,
-                stringArrayEncoding: 'rc4',
-                stringArrayThreshold: 1,
-                transformObjectKeys: true,
-                unicodeEscapeSequence: false
-              };
-
-              // 调用解析JS函数
-              common.parseJS(filedir, data, options,ObfuscatorT.obfuscate);
-
-              // 调用解析html函数
-              common.parseHTML(filedir, data, options,ObfuscatorT.obfuscate);
-
-              // 调用获取js内容的函数，并写入到同名但后缀名为webpack的文件中,朱window和Linux分隔符的区别
-              common.getJS(filedir, data);
-            });
-          }
-        })
-      })
-    }
-
+    let opt = {
+      compact: true,
+      controlFlowFlattening: false,
+      deadCodeInjection: false,
+      debugProtection: false,
+      debugProtectionInterval: false,
+      disableConsoleOutput: true,
+      identifierNamesGenerator: 'hexadecimal',
+      log: false,
+      renameGlobals: false,
+      rotateStringArray: true,
+      selfDefending: true,
+      stringArray: true,
+      stringArrayEncoding: false,
+      stringArrayThreshold: 0.75,
+      unicodeEscapeSequence: false
+    };
+    common.filterFile(filePath, _this, ObfuscatorT.obfuscate, opt);
     // 6、执行 callback 回调
     callback();
-
   });
 };
 

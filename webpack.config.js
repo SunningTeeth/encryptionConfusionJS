@@ -14,25 +14,25 @@ module.exports = {
         filename: "bundle.js"
     },
     plugins: [
-        // new Aaencode({
-        //     global: '$',
-        //     jsReg: /.*\.(?:html|js)/,
-        //     assetsPath: './test/html'
-        // }),
-        // new Obfuscator({
-        //     global: '$',
-        //     jsReg: /.*\.(?:html|js)/,
-        //     assetsPath: './obfuscator/html'
-        // }),
-        new Base64({
+        new Aaencode({
             global: '$',
             jsReg: /.*\.(?:html|js)/,
             assetsPath: './test/html'
         }),
+        // new Obfuscator({
+        //     global: '$',
+        //     jsReg: /.*\.(?:html|js)/,
+        //     assetsPath: './test/html'
+        // }),
+        // new Base64({
+        //     global: '$',
+        //     jsReg: /.*\.(?:html|js)/,
+        //     assetsPath: './test/html'
+        // }),
         // new JsEncodePlugin({
         //     global: '$',
         //     jsReg: /.*\.(?:html|js)/,
-        //     assetsPath: './jjencode/html'
+        //     assetsPath: './test/html'
         // }),
         // new UglifyJs({
         //     global: '$',
