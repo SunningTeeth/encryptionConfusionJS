@@ -3,7 +3,7 @@
 # uglifyJS
 	https://github.com/mishoo/UglifyJS2#mangle-properties-options
 
-	### 获取源码UglifyJS.minify(code).code
+### 获取源码UglifyJS.minify(code).code
 	var code = "function add(first, second) { return first + second; }";
 	var result = UglifyJS.minify(code);
 	console.log(result.error); // runtime error, or `undefined` if no error
