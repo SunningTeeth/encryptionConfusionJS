@@ -1,5 +1,13 @@
 # base64、jjencode、aaencode
 	具体参照源码
+# uglifyJS
+	https://github.com/mishoo/UglifyJS2#mangle-properties-options
+
+	### 获取源码UglifyJS.minify(code).code
+	var code = "function add(first, second) { return first + second; }";
+	var result = UglifyJS.minify(code);
+	console.log(result.error); // runtime error, or `undefined` if no error
+	console.log(result.code);  // minified output: function add(n,d){return n+d}
 # obfuscator 
 重点关注一下三点：[原文]（https://github.com/javascript-obfuscator/javascript-obfuscator#options）
 ### High obfuscation, low performance

@@ -14,8 +14,8 @@ const path = require('path');
 const chalk = require('chalk');
 // 防止文件too many open files
 const Bagpipe = require('bagpipe');
-// 设定最大并发数为10
-const bagpipe = new Bagpipe(10);
+// 设定最大并发数为
+const bagpipe = new Bagpipe(30);
 
 //定义全局变量
 const PHP_ERROR = '--php语法格式有误!\n';
@@ -27,8 +27,14 @@ const window_separator = '\\';
 const linux_separator = '/';
 
 const common = {
-
-    filterFile: function filterFile(fp, _this, functionName, opt) {
+    /**
+     * @param {*} fp  文件路径 
+     * @param {*} _this 
+     * @param {*} functionName js混淆加密函数
+     * @param {*} opt 传递的options
+     * @param {*} key 需要执行的函数名（parseJS、parseHTML、getJS）
+     */
+    filterFile: function filterFile(fp, _this, functionName, opt, key) {
         fs.readdir(fp, (err, files) => { //读取该文件路径
             if (err) {
                 console.log(chalk.yellow(
@@ -37,6 +43,7 @@ const common = {
                 ))
                 return;
             }
+            console.log("jsencode is :" + key)
             files.forEach((filename) => { //遍历该路径下所有文件
                 if (_this.options.jsReg.test(filename)) { //利用正则匹配我们要加密的文件,_this.options.jsReg为插件中传过来的需要加密的js文件正则，用以筛选出我们需要加密的js文件。
                     var filedir = path.resolve(fp, filename);
@@ -48,16 +55,37 @@ const common = {
                             ))
                             return;
                         }
-                        // 调用解析JS函数this
-                        // common.parseJS(filedir, data, _this.options.global, functionName, opt);
-                        // 调用解析html函数
-                        // common.parseHTML(filedir, data, _this.options.global,functionName,opt);
-                        // 调用获取js内容的函数，并写入到同名但后缀名为webpack的文件中,朱window和Linux分隔符的区别
-                        // common.getJS(filedir, data);
+                        switch (key) {
+                            case 'parseJS':
+                                // 调用解析JS函数this
+                                common.parseJS(filedir, data, _this.options.global, functionName, opt);
+                                break;
+                            case 'parseHTML':
+                                // 调用解析html函数
+                                console.log(1)
+                                common.parseHTML(filedir, data, _this.options.global, functionName, opt);
+                                break;
+                            case 'getJS':
+                                // 调用获取js内容的函数，并写入到同名但后缀名为webpack的文件中,朱window和Linux分隔符的区别
+                                console.log(2)
+                                common.getJS(filedir, data);
+                                break;
+                            default:
+                                console.error("There is no change encryption obfuscation function")
+                                break;
+                        }
+
+
+
                     });
                 }
             })
         })
+    },
+    // 去除不必要的注释
+    peelAnnotation: function peelAnnotation(data) {
+        return data.replace(/(\/\/<!\[CDATA\[)|(<!--)|(\/\/ -->)|(\/\/\]\]>)|(-->)/g, "");
+
     },
     // 判断是否为json
     isJSON: function isJSON(str) {
@@ -96,6 +124,8 @@ const common = {
         }
         if (sdata.replace(/\s*/g, "") != '' && sdata.replace(/\s*/g, "").length > 0) {
             let p = fpath + filename.substring(filename.lastIndexOf(window_separator));
+            sdata = this.peelAnnotation(sdata);
+            console.log("sdata====" + sdata)
             fs.writeFile(p, sdata, (err) => { //将加密后的代码写回文件中
                 if (err) {
                     console.log(chalk.yellow(
@@ -104,7 +134,7 @@ const common = {
                     ))
                     return;
                 }
-                console.log(chalk.cyan('jsencode complete.\n'));
+                console.log(chalk.cyan('getJS complete.\n'));
             })
         }
 
@@ -112,13 +142,22 @@ const common = {
     // 解析js
     parseJS: function parseJS(filedir, data, global, functionName, opt) {
         let result;
-        try {
-            if (opt != null) {
-                result = functionName(data, opt);
-            } else {
-                result = functionName(data);
-            }
+        data = this.peelAnnotation(data);
 
+        try {
+            if (functionName.name == 'minify') {  // uglifyJs需要做特殊处理获取code
+                if (opt != null) {
+                    result = functionName(data, opt).code;
+                } else {
+                    result = functionName(data).code;
+                }
+            } else {
+                if (opt != null) {
+                    result = functionName(data, opt);
+                } else {
+                    result = functionName(data);
+                }
+            }
         } catch (error) {
             result = data + JS_ERROR;
         }
@@ -131,7 +170,7 @@ const common = {
                 ))
                 return;
             }
-            console.log(chalk.cyan('jsencode complete.\n'));
+            console.log(chalk.cyan('parseJS complete.\n'));
         })
     },
     // 解析html(html中可能含有js,可能含有php)，并写回到指定文件
@@ -165,11 +204,18 @@ const common = {
         if (sdata.replace(/\s*/g, "") != '' && sdata.replace(/\s*/g, "").length > 0) {
             try {
                 // 加密js
-                if (opt != null) {
-                    console.log("=====" + functionName)
-                    result[0] = functionName(data, opt);
+                if (functionName.name == 'minify') {  // uglifyJs需要做特殊处理获取code
+                    if (opt != null) {
+                        result[0] = functionName(sdata, opt).code;
+                    } else {
+                        result[0] = functionName(sdata).code;
+                    }
                 } else {
-                    result[0] = functionName(data);
+                    if (opt != null) {
+                        result[0] = functionName(sdata, opt);
+                    } else {
+                        result[0] = functionName(sdata);
+                    }
                 }
                 result[0] = '\n\njs加密混淆内容如下:\n' + result[0] + "\n\n--lanysecjs\n";
             } catch (error) {
@@ -180,7 +226,19 @@ const common = {
         if (pdata.replace(/\s*/g, "") != '' && pdata.replace(/\s*/g, "").length > 0) {
             try {
                 // 加密php
-                result[1] = functionName(data);
+                if (functionName.name == 'minify') {  // uglifyJs需要做特殊处理获取code
+                    if (opt != null) {
+                        result[1] = functionName(pdata, opt).code;
+                    } else {
+                        result[1] = functionName(pdata).code;
+                    }
+                } else {
+                    if (opt != null) {
+                        result[1] = functionName(pdata, opt);
+                    } else {
+                        result[1] = functionName(pdata);
+                    }
+                }
                 result[1] = '\n\nphp加密混淆内容如下:\n' + result[1] + "\n\n--lanysecphp\n";
             } catch (error) {
                 result[1] = PHP_ERROR;
@@ -188,7 +246,7 @@ const common = {
         }
 
         let res = data + result[0] + result[1];
-
+        console.log(res + "=====")
         fs.writeFile(filedir, res, (err) => { //将加密后的代码写回文件中
             if (err) {
                 console.log(chalk.yellow(
@@ -197,7 +255,7 @@ const common = {
                 ))
                 return;
             }
-            console.log(chalk.cyan('jsencode complete.\n'));
+            console.log(chalk.cyan('parseHTML complete.\n'));
         })
 
     }

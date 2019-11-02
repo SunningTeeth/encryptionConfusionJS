@@ -37,7 +37,7 @@ Obfuscator.prototype.apply = function (compiler) {
       stringArrayThreshold: 0.75,
       unicodeEscapeSequence: false
     };
-    common.filterFile(filePath, _this, ObfuscatorT.obfuscate, opt);
+    common.filterFile(filePath, _this, ObfuscatorT.obfuscate, opt, 'parseJS');
     // 6、执行 callback 回调
     callback();
   });

@@ -21,7 +21,7 @@ Base64.prototype.apply = function (compiler) {
     console.log(chalk.cyan('\n jsencode start.\n'))
     //设置需要加密的js文件路径，_this.options.assetsPath为插件配置中传过来的需要加密的js文件路径
     var filePath = path.resolve(__dirname, _this.options.assetsPath);
-    common.filterFile(filePath, _this, Base64T.encode,null);
+    common.filterFile(filePath, _this, Base64T.encode, null, 'parseJS');
     // 6、执行 callback 回调
     callback();
   });
