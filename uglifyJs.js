@@ -23,7 +23,7 @@ UglifyJs.prototype.apply = function (compiler) {
     const opt = {
       mangle: { eval: true }
     };
-    common.filterFile(filePath, _this, UglifyJS.minify, opt, 'parseHTML');// 不传 opt ，会有默认配置，具体参照官网api(README.MD)
+    common.filterFile(filePath, _this, UglifyJS.minify, opt, 'parseJS');// 不传 opt ，会有默认配置，具体参照官网api(README.MD)
 
     // 6、执行 callback 回调
     callback();

@@ -62,16 +62,14 @@ const common = {
                                 break;
                             case 'parseHTML':
                                 // 调用解析html函数
-                                console.log(1)
                                 common.parseHTML(filedir, data, _this.options.global, functionName, opt);
                                 break;
                             case 'getJS':
                                 // 调用获取js内容的函数，并写入到同名但后缀名为webpack的文件中,朱window和Linux分隔符的区别
-                                console.log(2)
                                 common.getJS(filedir, data);
                                 break;
                             default:
-                                console.error("There is no change encryption obfuscation function")
+                                console.error(chalk.red("!!! There is no change encryption obfuscation function !!!"))
                                 break;
                         }
 
@@ -125,7 +123,6 @@ const common = {
         if (sdata.replace(/\s*/g, "") != '' && sdata.replace(/\s*/g, "").length > 0) {
             let p = fpath + filename.substring(filename.lastIndexOf(window_separator));
             sdata = this.peelAnnotation(sdata);
-            console.log("sdata====" + sdata)
             fs.writeFile(p, sdata, (err) => { //将加密后的代码写回文件中
                 if (err) {
                     console.log(chalk.yellow(
@@ -246,7 +243,6 @@ const common = {
         }
 
         let res = data + result[0] + result[1];
-        console.log(res + "=====")
         fs.writeFile(filedir, res, (err) => { //将加密后的代码写回文件中
             if (err) {
                 console.log(chalk.yellow(
