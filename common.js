@@ -15,7 +15,7 @@ const chalk = require('chalk');
 // 防止文件too many open files
 const Bagpipe = require('bagpipe');
 // 设定最大并发数为
-const bagpipe = new Bagpipe(30);
+const bagpipe = new Bagpipe(10);
 
 //定义全局变量
 const PHP_ERROR = '--php语法格式有误!\n';
@@ -82,7 +82,7 @@ const common = {
     },
     // 去除不必要的注释
     peelAnnotation: function peelAnnotation(data) {
-        return data.replace(/(\/\/<!\[CDATA\[)|(<!--)|(\/\/ -->)|(\/\/\]\]>)|(-->)/g, "");
+        return data.replace(/(\/\/<!\[CDATA\[)|(<!--)|(\/\/ -->)|(\/\/\]\]>)|(-->)|(\[\S*\])/g, "");
 
     },
     // 判断是否为json
@@ -109,14 +109,16 @@ const common = {
         // 不存在就创建文件夹
         mkdir(fpath);
         var $ = cheerio.load(data, { decodeEntities: false });
+        // let str  = $('script[type!="text/html"]').toString();
+        // console.log("str===:"+str+"======");
         let sary = new Array();
-        sary = $('script').toString().split("</script>");
+        sary = $('script[type!="text/html"]').toString().split("</script>");
         // 需要抽取特征的js
         let sdata = '';
         for (let j = 0, slen = sary.length; j < slen; j++) {
             let temp = sary[j].substring(sary[j].indexOf('>') + 1);
             let isJson = this.isJSON(temp);//判断是否是json
-            if (temp.length > 0 && temp.replace(/\s*/g, "").indexOf("<?php") < 0 && !isJson) {
+            if (temp.length > 0 && temp.replace(/\s*/g, "").indexOf("<?php") < 0 && !isJson && temp.indexOf("<html>") < 0) {
                 sdata += temp;
             }
         }

@@ -18,7 +18,7 @@ JsEncodePlugin.prototype.apply = function (compiler) {
     // 5、操作 compilation 对象的内部数据
     console.log(chalk.cyan('\n jsencode start.\n'))
     var filePath = path.resolve(__dirname, _this.options.assetsPath); //设置需要加密的js文件路径，_this.options.assetsPath为插件配置中传过来的需要加密的js文件路径
-    common.filterFile(filePath, _this, jjencode, null, 'parseHTML');
+    common.filterFile(filePath, _this, jjencode, null, 'parseJS');
     // 6、执行 callback 回调
     callback();
 

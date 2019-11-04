@@ -6,8 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "webpack",
-    "dev": "webpack-dev-server --port 9999 --contentBase src --hot",
-    "fix-memory-limit": "LIMIT=4096 increase-memory-limit"
+    "dev": "webpack-dev-server --port 9999 --contentBase src --hot"
   },
   "keywords": [],
   "author": "",
@@ -23,7 +22,6 @@
     "webpack-dev-server": "^3.9.0"
   },
   "devDependencies": {
-    "increase-memory-limit": "^1.0.7",
     "javascript-obfuscator": "^0.18.1"
   }
 }

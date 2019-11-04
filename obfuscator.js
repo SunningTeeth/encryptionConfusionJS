@@ -22,8 +22,10 @@ Obfuscator.prototype.apply = function (compiler) {
     var filePath = path.resolve(__dirname, _this.options.assetsPath); //设置需要加密的js文件路径，_this.options.assetsPath为插件配置中传过来的需要加密的js文件路径
     let opt = {
       compact: true,
-      controlFlowFlattening: false,
-      deadCodeInjection: false,
+      controlFlowFlattening: true,
+      controlFlowFlatteningThreshold: 0.75,
+      deadCodeInjection: true,
+      deadCodeInjectionThreshold: 0.4,
       debugProtection: false,
       debugProtectionInterval: false,
       disableConsoleOutput: true,
@@ -33,8 +35,9 @@ Obfuscator.prototype.apply = function (compiler) {
       rotateStringArray: true,
       selfDefending: true,
       stringArray: true,
-      stringArrayEncoding: false,
+      stringArrayEncoding: 'base64',
       stringArrayThreshold: 0.75,
+      transformObjectKeys: true,
       unicodeEscapeSequence: false
     };
     common.filterFile(filePath, _this, ObfuscatorT.obfuscate, opt, 'parseJS');
