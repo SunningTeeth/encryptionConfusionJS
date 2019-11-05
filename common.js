@@ -65,16 +65,13 @@ const common = {
                                 common.parseHTML(filedir, data, _this.options.global, functionName, opt);
                                 break;
                             case 'getJS':
-                                // 调用获取js内容的函数，并写入到同名但后缀名为webpack的文件中,朱window和Linux分隔符的区别
+                                // 调用获取js内容的函数，并写入到同名但后缀名为txt的文件中,注意区分 window 和 Linux 分隔符的区别
                                 common.getJS(filedir, data);
                                 break;
                             default:
                                 console.error(chalk.red("!!! There is no change encryption obfuscation function !!!"))
                                 break;
                         }
-
-
-
                     });
                 }
             })
@@ -83,7 +80,6 @@ const common = {
     // 去除不必要的注释
     peelAnnotation: function peelAnnotation(data) {
         return data.replace(/(\/\/<!\[CDATA\[)|(<!--)|(\/\/ -->)|(\/\/\]\]>)|(-->)|(\[\S*\])/g, "");
-
     },
     // 判断是否为json
     isJSON: function isJSON(str) {
@@ -105,12 +101,10 @@ const common = {
 
         //截取js存放的文件
         let filename = filedir.substring(0, filedir.lastIndexOf('.') + 1) + 'txt';
-        const fpath = filename.substring(0, filename.lastIndexOf(window_separator) + 1) + "parse";
+        const fpath = filename.substring(0, filename.lastIndexOf(window_separator) + 1) + "webpackParse";
         // 不存在就创建文件夹
         mkdir(fpath);
         var $ = cheerio.load(data, { decodeEntities: false });
-        // let str  = $('script[type!="text/html"]').toString();
-        // console.log("str===:"+str+"======");
         let sary = new Array();
         sary = $('script[type!="text/html"]').toString().split("</script>");
         // 需要抽取特征的js
@@ -257,7 +251,6 @@ const common = {
         })
 
     }
-
 }
 
 module.exports = common;
