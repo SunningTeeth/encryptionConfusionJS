@@ -6,16 +6,22 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.TreeSet;
 
-import jdk.nashorn.api.tree.*;
 import jdk.nashorn.api.tree.Tree.Kind;
 import org.json.JSONObject;
 
-
 /**
- * 使用JDK 11的Javascript engine nashorm 解析javascript代码, 并释放函数名, 变量名称
+ * 使用JDK 11的Javascript engine nashorm 解析javascript代码, 可抽取函数名, 变量名称，字符串等特征
  */
 
 public class JavaScriptASTExtractor {
+
+    private static JSONObject ASTExtractor = new JSONObject();
+    private static final String FILE_PATH = "filePath";
+    private static final String VARIABLES = "variables";
+    private static final String FUNCTIONS = "functions";
+    private static final String STRING_CONSTANTS = "stringConstants";
+    private static final String NON_PARSE_CODE = "nonParseCode";
+    private static final String LOCATE_PATH = "D:/js加密混淆/encryptionConfusionJS/uglifyjs/html/parse/src";
 
     public static class Result {
         public TreeSet<String> variables = new TreeSet<>();
@@ -47,8 +53,7 @@ public class JavaScriptASTExtractor {
         }
     }
 
-
-    public static List<String> readDirectory(String filepath) {
+    private static List<String> readDirectory(String filepath) {
         List<String> filename = new ArrayList<String>();
         try {
             File file = new File(filepath);
@@ -57,13 +62,8 @@ public class JavaScriptASTExtractor {
                 for (int i = 0; i < fileList.length; i++) {
                     File readFile = new File(filepath + "\\" + fileList[i]);
                     if (!readFile.isDirectory()) {
-//            System.out.println("path=" + readFile.getPath());
-//            System.out.println("absolutepath="
-//              + readFile.getAbsolutePath());
-//            System.out.println("name=" + readFile.getName());
                         filename.add(readFile.getAbsolutePath());
                     }
-
                     /*else if (readFile.isDirectory()) {
                         readDirectory(filepath + "\\" + fileList[i]);
                     }*/
@@ -80,7 +80,7 @@ public class JavaScriptASTExtractor {
         return filename;
     }
 
-    public static String readFile(String filepath) {
+    private static String readFile(String filepath) {
         try {
             InputStream is = new FileInputStream(filepath);
             int iAvail = is.available();
@@ -94,17 +94,16 @@ public class JavaScriptASTExtractor {
         return "";
     }
 
-    public static void writeFile(File file) {
-
+    private static void writeFile(File file) {
         try {
-            String content = json.toString();
+            String content = ASTExtractor.toString();
             if (!file.exists()) {
                 file.createNewFile();
             }
             String fp = file.getAbsolutePath();
             String fp1 = fp.substring(0, fp.lastIndexOf("\\") + 1);
             String fp2 = fp.substring(fp.lastIndexOf("\\") + 1, fp.lastIndexOf("."));
-            String directory = fp1 + "pasre\\";
+            String directory = fp1 + "ASTParse\\";
             File jFile = new File(directory);
             if (!jFile.exists()) {
                 jFile.mkdirs();
@@ -114,51 +113,55 @@ public class JavaScriptASTExtractor {
             BufferedWriter bw = new BufferedWriter(fileWriter);
             bw.write(content);
             bw.close();
-            System.out.println("finish...");
         } catch (IOException e) {
             e.printStackTrace();
         }
-
     }
 
-    public static JSONObject json = new JSONObject();
-
-    public static void main(String[] args) throws Throwable {
-        String path = "D:/CTT/AST";
-        String str = "";
+    public static void main(String[] args) {
+        String content = "";
         List<String> filePath = new ArrayList<>();
-        if (path.indexOf(".") > 0) {
-            str = readFile(path);
+        if (LOCATE_PATH.indexOf(".") > 0) {
+            content = readFile(LOCATE_PATH);
         } else {
-            filePath = readDirectory(path);
+            filePath = readDirectory(LOCATE_PATH);
         }
         if (!filePath.isEmpty()) {
             for (String fp : filePath) {
                 File file = new File(fp);
-                System.out.println(fp);
+                System.out.println(fp+"####");
                 Result result = extract(file);
-                json.put("filePath", file);
-                json.put("variables", result.variables);
-                json.put("functions", result.functions);
-                json.put("stringConstants", result.stringConstants);
-                if (!json.has("nonParseCode")) {
-                    json.put("nonParseCode", "");
+                if(result != null){
+                    ASTExtractor.put(FILE_PATH, file);
+                    ASTExtractor.put(VARIABLES, result.variables);
+                    ASTExtractor.put(FUNCTIONS, result.functions);
+                    ASTExtractor.put(STRING_CONSTANTS, result.stringConstants);
+                }
+
+                if (!ASTExtractor.has(NON_PARSE_CODE)) {
+                    ASTExtractor.put(NON_PARSE_CODE, "");
                 }
                 writeFile(file);
             }
         }
-        if (!str.isEmpty()) {
-            writeFile(new File("D:/CTT/AST/demo.js"));
+        if (!content.isEmpty()) {
+            writeFile(new File(LOCATE_PATH));
         }
-
-
+        System.out.println("finished .....");
     }
 
-    private static Result extract(File file) throws Exception {
+    private static Result extract(File file) {
         Result result = new Result();
 
         Parser parser = Parser.create();
-        CompilationUnitTree tree = parser.parse(file, null);
+        CompilationUnitTree tree = null;
+        try {
+            tree = parser.parse(file, null);
+        } catch (Exception e) {
+//      e.printStackTrace();
+            return null;
+
+        }
         for (Tree t : tree.getSourceElements()) {
             extract(t, result);
         }
@@ -169,6 +172,7 @@ public class JavaScriptASTExtractor {
         if (t == null) {
             return;
         }
+        System.out.println(t.getKind());
         switch (t.getKind()) {
             case ASSIGNMENT: {
                 AssignmentTree t0 = (AssignmentTree) t;
@@ -326,13 +330,19 @@ public class JavaScriptASTExtractor {
             case LESS_THAN_EQUAL:
             case GREATER_THAN:
             case GREATER_THAN_EQUAL:
-            case MULTIPLY_ASSIGNMENT:
+
             case CONDITIONAL_AND:
             case CONDITIONAL_OR:
             case COMMA: {
                 BinaryTree t0 = (BinaryTree) t;
                 extractIdentifier(t0.getLeftOperand(), result, 1);
                 extractIdentifier(t0.getRightOperand(), result, 1);
+            }
+            break;
+            case MULTIPLY_ASSIGNMENT:{
+                CompoundAssignmentTree t0 = (CompoundAssignmentTree) t;
+                extractIdentifier(t0.getVariable(),result,1);
+                extractIdentifier(t0.getExpression(),result,1);
             }
             break;
             case NULL_LITERAL:
@@ -368,7 +378,7 @@ public class JavaScriptASTExtractor {
             }
             break;
             default:
-                json.put("nonParseCode", t.getKind());//没有解析的code
+                ASTExtractor.put("nonParseCode", t.getKind());//没有解析的code
 //        throw new RuntimeException("Unsupported AST tree: " + t);
         }
     }
@@ -387,6 +397,5 @@ public class JavaScriptASTExtractor {
             extract(t, result);
         }
     }
-
 }
 

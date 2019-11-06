@@ -18,8 +18,8 @@ const Bagpipe = require('bagpipe');
 const bagpipe = new Bagpipe(10);
 
 //定义全局变量
-const PHP_ERROR = '--php语法格式有误!\n';
-const JS_ERROR = '--js语法格式有误!\n';
+const PHP_ERROR = '\n--php语法格式有误!\n';
+const JS_ERROR = '\n--js语法格式有误!\n';
 
 // 1、js-encode-plugin.js 文件（webpack的js加密插件）
 
@@ -57,7 +57,7 @@ const common = {
                         }
                         switch (key) {
                             case 'parseJS':
-                                // 调用解析JS函数this
+                                // 调用解析JS函数
                                 common.parseJS(filedir, data, _this.options.global, functionName, opt);
                                 break;
                             case 'parseHTML':
@@ -154,7 +154,9 @@ const common = {
         } catch (error) {
             result = data + JS_ERROR;
         }
-
+        if (result == undefined) {
+            result = data + JS_ERROR;
+        }
         fs.writeFile(filedir, result, (err) => { //将加密后的代码写回文件中
             if (err) {
                 console.log(chalk.yellow(
