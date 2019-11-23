@@ -22,6 +22,7 @@
     "webpack-dev-server": "^3.9.0"
   },
   "devDependencies": {
-    "javascript-obfuscator": "^0.18.1"
+    "javascript-obfuscator": "^0.18.1",
+    "uglifyjs-webpack-plugin": "^2.2.0"
   }
 }
