@@ -22,30 +22,57 @@ public class JavaScriptASTExtractor {
   private static final String VARIABLES = "variables";
   private static final String FUNCTIONS = "functions";
   private static final String STRING_CONSTANTS = "stringConstants";
-  private static JSONObject ASTExtractor = new JSONObject();
 
   public static void main(String[] args) {
-//    String ASTDir = System.getProperty("ASTDir");
-    String ASTDir = "C:\\Donne\\AST\\test1";
-    String content = "";
-    List<String> filePath = new ArrayList<>();
-    if (ASTDir.indexOf(".") > 0) {
-      content = readFile(ASTDir);
-    } else {
-      filePath = readDirectory(ASTDir);
+
+    if (args.length == 0 || args[0].trim().isEmpty()) {
+      throw new RuntimeException("please print AST directory !!!");
     }
-    if (!filePath.isEmpty()) {
-      for (String fp : filePath) {
-        preParse(fp);
+
+    for (int i = 0, len = args.length - 1; i < len; i++) {
+
+      String ASTDir = args[i];
+      String content = "";
+      JSONObject ASTExtractor = new JSONObject();
+      List<String> filePath = new ArrayList<>();
+
+      if (ASTDir.indexOf(".") > 0) {//文件
+        content = readFile(ASTDir);
+      } else {//文件夹
+        filePath = readDirectory(ASTDir);
+      }
+
+      if (!filePath.isEmpty()) {
+        for (String fp : filePath) {
+          preParse(ASTExtractor, fp);
+        }
+      }
+
+      if (!content.isEmpty()) {
+        preParse(ASTExtractor, ASTDir);
       }
     }
-    if (!content.isEmpty()) {//文件
-      preParse(ASTDir);
+
+    String exe = "python";
+    String command = args[args.length - 1];
+    String[] cmdArr = new String[]{exe, command};
+    Process process = null;
+    try {
+      process = Runtime.getRuntime().exec(cmdArr);
+      InputStream is = process.getInputStream();
+      int iAvail = is.available();
+      byte[] bytes = new byte[iAvail];
+      is.read(bytes);
+      is.close();
+      System.out.println("python read content : " + new String(bytes));
+    } catch (Exception e) {
+      e.printStackTrace();
     }
+
     System.out.println("finished .....");
   }
 
-  private static void preParse(String filepathOrDirectoryPath) {
+  private static void preParse(JSONObject ASTExtractor, String filepathOrDirectoryPath) {
     File file = new File(filepathOrDirectoryPath);
     Result result = extract(file);
     System.out.println("result:  " + result);
@@ -54,28 +81,32 @@ public class JavaScriptASTExtractor {
       ASTExtractor.put(VARIABLES, result.variables);
       ASTExtractor.put(FUNCTIONS, result.functions);
       ASTExtractor.put(STRING_CONSTANTS, result.stringConstants);
-      writeFile(file, true);
+      writeFile(file, true, ASTExtractor);
     } else if (result == null) {
-      writeFile(file, false);
+      writeFile(file, false, ASTExtractor);
     }
   }
 
   private static List<String> readDirectory(String filepath) {
     List<String> filename = new ArrayList<>();
-    try {
-      File file = new File(filepath);
-      if (file.isDirectory()) {
-        String[] fileList = file.list();
-        for (int i = 0, len = fileList.length; i < len; i++) {
-          String path = filepath + SYS_SEPARATOR + fileList[i];
-          File readFile = new File(path);
-          if (!readFile.isDirectory()) {
-            filename.add(readFile.getAbsolutePath());
-          }
-        }
-      }
-    } catch (Exception e) {
+    File file = new File(filepath);
+    if (!file.exists()) {
+      throw new RuntimeException(file.getName() + " is not exists !!!");
     }
+
+    String[] fileList = file.list();
+    if (fileList.length < 1) {
+      throw new RuntimeException(file.getName() + " is null directory !!!");
+    }
+
+    for (int i = 0, len = fileList.length; i < len; i++) {
+      String path = filepath + SYS_SEPARATOR + fileList[i];
+      File readFile = new File(path);
+      if (!readFile.isDirectory()) {
+        filename.add(readFile.getAbsolutePath());
+      }
+    }
+
     return filename;
   }
 
@@ -93,7 +124,7 @@ public class JavaScriptASTExtractor {
     return "";
   }
 
-  private static void writeFile(File file, Boolean isParseSuccess) {
+  private static void writeFile(File file, Boolean isParseSuccess, JSONObject ASTExtractor) {
     try {
 
       String path = file.getParent() + SYS_SEPARATOR;
@@ -109,15 +140,18 @@ public class JavaScriptASTExtractor {
       if (!jFile.exists()) {
         jFile.mkdirs();
       }
+      String content = "";
       if (isParseSuccess) {
         outputDir.append(fileName).append(AST_SUFFIX);
+        content = ASTExtractor.toString();
       } else {
         outputDir.append(fileName).append(NOT_AST_SUFFIX);
+        content = readFile(file.getAbsolutePath());
       }
 
       FileWriter fileWriter = new FileWriter(outputDir.toString());
       BufferedWriter bw = new BufferedWriter(fileWriter);
-      bw.write(ASTExtractor.toString());
+      bw.write(content);
       bw.close();
     } catch (IOException e) {
       e.printStackTrace();
