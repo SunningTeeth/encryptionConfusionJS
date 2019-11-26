@@ -18,7 +18,6 @@ public class JavaScriptASTExtractor {
     private static final String SYS_SEPARATOR = File.separator;
     private static final String AST_SUFFIX = ".symbol";
     private static final String NOT_AST_SUFFIX = ".txt";
-    private static final String FILE_PATH = "filePath";
     private static final String VARIABLES = "variables";
     private static final String FUNCTIONS = "functions";
     private static final String STRING_CONSTANTS = "stringConstants";
@@ -76,6 +75,33 @@ public class JavaScriptASTExtractor {
             return;
         }
         switch (t.getKind()) {
+            case CASE: {
+                CaseTree t0 = (CaseTree) t;
+                for(Tree tn : t0.getStatements()){
+                    extract(tn, result);
+                }
+                extractIdentifier(t0.getExpression(), result, 1);
+            }
+            break;
+            case INSTANCE_OF: {
+                InstanceOfTree t0 = (InstanceOfTree) t;
+                extractIdentifier(t0.getExpression(), result, 1);
+                extractIdentifier(t0.getType(), result, 1);
+            }
+            break;
+            case REGEXP_LITERAL: {
+                RegExpLiteralTree t0 = (RegExpLiteralTree) t;
+                result.addVariable(t0.getPattern());
+                result.addVariable(t0.getOptions());
+            }
+            break;
+            case SWITCH: {
+                SwitchTree t0 = (SwitchTree) t;
+                for (Tree tn : t0.getCases()) {
+                    extract(tn, result);
+                }
+            }
+            break;
             case ASSIGNMENT: {
                 AssignmentTree t0 = (AssignmentTree) t;
                 extractIdentifier(t0.getVariable(), result, 1);
@@ -232,7 +258,6 @@ public class JavaScriptASTExtractor {
             case LESS_THAN_EQUAL:
             case GREATER_THAN:
             case GREATER_THAN_EQUAL:
-
             case CONDITIONAL_AND:
             case CONDITIONAL_OR:
             case COMMA: {
@@ -273,6 +298,9 @@ public class JavaScriptASTExtractor {
             case DELETE:
             case TYPEOF:
             case VOID:
+            case BREAK:
+            case THROW:
+            case CONTINUE:
                 break;
             case CONDITIONAL_EXPRESSION: {
                 ConditionalExpressionTree t0 = (ConditionalExpressionTree) t;
@@ -280,7 +308,8 @@ public class JavaScriptASTExtractor {
             }
             break;
             default:
-                throw new RuntimeException("Unsupported AST tree: " + t);
+//                throw new RuntimeException("Unsupported AST tree: " + t);
+//                System.out.println("Unsupported AST tree:" + t.getKind());
         }
     }
 
@@ -319,9 +348,8 @@ public class JavaScriptASTExtractor {
     private static void preParse(JSONObject ASTExtractor, String filepathOrDirectoryPath) {
         File file = new File(filepathOrDirectoryPath);
         Result result = extract(file);
-        System.out.println("result:  " + result);
+//        System.out.println("result:  " + result);
         if (result != null) {
-            ASTExtractor.put(FILE_PATH, file);
             ASTExtractor.put(VARIABLES, result.variables);
             ASTExtractor.put(FUNCTIONS, result.functions);
             ASTExtractor.put(STRING_CONSTANTS, result.stringConstants);
